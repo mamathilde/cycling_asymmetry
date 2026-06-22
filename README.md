@@ -25,10 +25,9 @@ Raw force and metabolic data are not included — contact the author to request 
 
 ## How to Run
 
-This project uses [Quarto](https://quarto.org). You can either:
+This project uses [Quarto](https://quarto.org). 
 
-- View the results directly by opening `code_github.html` in a browser.
-- Re-run the analysis in RStudio (version used: 2026.05.0+218) by opening `code.qmd` and clicking *Render*, or by running all chunks in order.
+You can run the analysis in RStudio (version used: 2026.05.0+218) by opening `code.qmd` and clicking *Render*, or by running all chunks in order.
 
 **R version:** 4.3.2
 
