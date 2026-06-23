@@ -12,7 +12,6 @@ We measured pedal force and metabolic data.
 
 ```text
 ├── code.qmd      # Main analysis script
-├── code.html     # Rendered output (no R needed to view)
 ├── data/         # Processed data files (one per subject)
 └── figures/      # Figures included in the manuscript
 ```
@@ -21,7 +20,38 @@ We measured pedal force and metabolic data.
 
 This folder contains processed data files (one per subject), computed from force and metabolic recordings collected during the study.
 
+# Dataset Column Headers
+
+Below is a description of the column headers in the dataset and their units, where applicable. Values are averages of two 30-s trials.
+
+- **Condition**: Trial condition (`1p5` = 1.5 W/kg, `2p5` = 2.5 W/kg, `Noasym` = no-feedback trial).
+- **SI_pow (%)**: Symmetry index calculated from mechanical power output.
+- **SI_force (%)**: Symmetry index calculated from pedal force.
+- **Ft_mean (N)**: Mean tangential force.
+- **Fr_mean (N)**: Mean radial force.
+- **Tot_power (W)**: Measured mechanical power output.
+- **Cadence (rpm)**: Pedaling cadence.
+- **RF_norm (N)**: Right force norm.
+- **LF_norm (N)**: Left force norm.
+- **VO2_Normalized (mL/kg/min)**: Oxygen consumption normalized to body mass.
+- **Gross_Metabolic_power (W)**: Gross metabolic power.
+- **Net_Metabolic_power (W)**: Net metabolic power.
+- **Normalized_Net_Metabolic_Power (W/kg)**: Net metabolic power normalized to body mass.
+- **RER**: Respiratory exchange ratio.
+- **FE (%)**: Force effectiveness.
+- **Efficiency (%)**: Net efficiency.
+- **Percents**: Asymmetry target.
+- **pow_condition**: Mechanical power output condition (`1p5` = 1.5 W/kg, `2p5` = 2.5 W/kg).
+- **SI_force_base**: Symmetry index minus the symmetry index measured during the baseline condition (`Noasym`).
+
+
+
+
+
+
 Raw force and metabolic data are not included — contact the author to request access.
+
+
 
 ## How to Run
 
