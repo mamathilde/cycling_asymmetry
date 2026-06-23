@@ -71,7 +71,7 @@ Figures included in the manuscript are available in the `figures/` folder.
 
 **Mathilde MONTEL**  
 ENS Rennes M2S Laboratory / University of Colorado Boulder  
-montelmathilde@gmail.com
+mathilde.montel@ens-rennes.fr
 
 **Alena M. GRABOWSKI**  
 University of Colorado Boulder  
