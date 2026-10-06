@@ -228,16 +228,54 @@ pred_FE$variable <- "efficiency"
 
 pred_FE <- pred_FE |> 
   rename(pow_condition = group)
+
+
+# Main effect prediction (without overall power output)
+all_data_1p5 <- all_data |> filter(pow_condition=="1p5")
+all_data_2p5 <- all_data |> filter(pow_condition=="2p5")
+
+# Efficiency
+mod_eff1_1p5 <- lmer(efficiency ~ SI_force  + (1 | subject), data = all_data_1p5)
+summary(mod_eff1_1p5)
+
+mod_eff1_2p5 <- lmer(efficiency ~ SI_force + (1 | subject), data = all_data_2p5)
+summary(mod_eff1_2p5)
+
+
+# Force effectiveness
+mod_FE1_1p5 <- lmer(FE ~ SI_force + (1 | subject), data = all_data_1p5)
+summary(mod_FE1_1p5)
+
+mod_FE1_2p5 <- lmer(FE ~ SI_force + (1 | subject), data = all_data_2p5)
+summary(mod_FE1_2p5)
 ```
 
 ## Graphs — Scatter plots (SI_force)
 
 ```{r graphs-SI_force}
 
+
+# Same scale for all the figures 
+
+eff_y_min <- min(
+  all_data_long$value[all_data_long$variable == "efficiency"],
+  na.rm = TRUE
+)
+
+eff_y_max <- max(
+  all_data_long$value[all_data_long$variable == "efficiency"],
+  na.rm = TRUE
+)
+
+eff_y_limits <- c(
+  floor(eff_y_min),
+  ceiling(eff_y_max)
+)
+
 # Efficiency
 
 p3 <- ggplot(
-  all_data_long |> filter(variable == "efficiency"),
+  all_data_long |> filter(variable == "efficiency", percents!="No"),
   aes(x = SI_force, y = value)
 ) +
   
@@ -248,7 +286,6 @@ p3 <- ggplot(
       size = pow_condition
     )
   ) +
-  
   geom_line(
     data = pred_eff,
     aes(
@@ -271,7 +308,7 @@ p3 <- ggplot(
   ) +
   
   scale_shape_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = 16,
       "2p5" = 18
@@ -290,7 +327,7 @@ p3 <- ggplot(
   ) +
   
   scale_linetype_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = "solid",
       "2p5" = "dotdash"
@@ -321,8 +358,10 @@ p3 <- ggplot(
   ) +
   
   scale_y_continuous(
+    limits = eff_y_limits,
+    breaks = pretty(eff_y_limits, n = 5),
     expand = expansion(mult = 0.02)
-  ) +
+  )+
   
   labs(
     x = "Pedal Force Asymmetry (%)",
@@ -369,24 +408,40 @@ p3 <- ggplot(
 
 p3
 
-# Force effectiveness
 
-p4 <- ggplot(all_data_long |> filter(variable == "FE")) +
-  aes(x = SI_force, y = value) +
+# Individual graph for 1.5 W/kg and 2.5 W/kg
+
+pred_eff_1p5 <- pred_eff |> 
+  filter(pow_condition == "1p5")
+
+pred_eff_2p5 <- pred_eff |> 
+  filter(pow_condition == "2p5")
+
+# Efficiency 1.5 W/kg
+
+p3_1p5 <- ggplot(
+  all_data_long |> 
+    filter(
+      variable == "efficiency",
+      pow_condition == "1p5", percents!="No"
+    ),
+  aes(x = SI_force, y = value)
+) +
   
   geom_point(
-    aes(color = percents,
-        shape = pow_condition,
-        size = pow_condition)
+    aes(color = percents),
+    shape = 16,
+    size = 2.2
   ) +
   
   geom_line(
-    data = pred_FE,
-    aes(x = x,
-        y = predicted,
-        linetype = pow_condition),
+    data = pred_eff_1p5,
+    aes(
+      x = x,
+      y = predicted
+    ),
     color = "black",
-    linewidth = 0.9
+    linewidth = 0.5
   ) +
   
   scale_color_manual(
@@ -399,15 +454,235 @@ p4 <- ggplot(all_data_long |> filter(variable == "FE")) +
     )
   ) +
   
+  scale_x_continuous(
+    expand = expansion(mult = 0.05)
+  ) +
+  
+  scale_y_continuous(
+    limits = eff_y_limits,
+    breaks = pretty(eff_y_limits, n = 5),
+    expand = expansion(mult = 0.02)
+  ) +
+  
+  labs(
+    x = "Pedal Force Asymmetry (%)",
+    y = "Net Efficiency (%)"
+  ) +
+  
+  theme_classic(base_size = 6) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    axis.text = element_text(
+      size = 6
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    legend.text = element_text(
+      size = 6
+    ),
+    
+    legend.position = "top",
+    
+    plot.title = element_text(
+      face = "bold",
+      size = 7.5,
+      hjust = 0.5
+    ),
+    
+    plot.margin = margin(
+      0.5, 0.5, 0.5, 0.5,
+      unit = "mm"
+    )
+  )
+
+
+# Efficiency 2.5 W/kg 
+
+p3_2p5 <- ggplot(
+  all_data_long |> 
+    filter(
+      variable == "efficiency",
+      pow_condition == "2p5", percents!="No"
+    ),
+  aes(x = SI_force, y = value)
+) +
+  
+  geom_point(
+    aes(color = percents),
+    shape = 18,
+    size = 3
+  ) +
+  
+  geom_line(
+    data = pred_eff_2p5,
+    aes(
+      x = x,
+      y = predicted
+    ),
+    color = "black",
+    linewidth = 0.5,
+    linetype = "dotdash"
+  ) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  scale_x_continuous(
+    expand = expansion(mult = 0.05)
+  ) +
+  
+  scale_y_continuous(
+    limits = eff_y_limits,
+    breaks = pretty(eff_y_limits, n = 5),
+    expand = expansion(mult = 0.02)
+  ) +
+  
+  labs(
+    x = "Pedal Force Asymmetry (%)",
+    y = "Net Efficiency (%)"
+  ) +
+  
+  theme_classic(base_size = 6) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    axis.text = element_text(
+      size = 6
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    legend.text = element_text(
+      size = 6
+    ),
+    
+    legend.position = "top",
+    
+    plot.title = element_text(
+      face = "bold",
+      size = 7.5,
+      hjust = 0.5
+    ),
+    
+    plot.margin = margin(
+      0.5, 0.5, 0.5, 0.5,
+      unit = "mm"
+    )
+  )
+
+
+p3_1p5
+p3_2p5
+
+```
+
+```{r}
+
+# Same scale for the axis
+
+FE_y_min <- min(
+  all_data_long$value[all_data_long$variable == "FE"],
+  na.rm = TRUE
+)
+
+FE_y_max <- max(
+  all_data_long$value[all_data_long$variable == "FE"],
+  na.rm = TRUE
+)
+
+FE_y_limits <- c(
+  floor(FE_y_min),
+  ceiling(FE_y_max)
+)
+
+
+# Force effectiveness main graph
+
+p4 <- ggplot(
+  all_data_long |> 
+    filter(
+      variable == "FE",
+      percents != "No"
+    ),
+  aes(
+    x = SI_force,
+    y = value
+  )
+) +
+  
+  # Points
+  geom_point(
+    aes(
+      color = percents,
+      shape = pow_condition,
+      size = pow_condition
+    )
+  ) +
+  
+  # Régressions
+  geom_line(
+    data = pred_FE,
+    aes(
+      x = x,
+      y = predicted,
+      linetype = pow_condition
+    ),
+    color = "black",
+    linewidth = 0.9
+  ) +
+  
+  # Couleurs PFA
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  # Formes MPO
   scale_shape_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = 16,
       "2p5" = 18
     ),
-    labels = c("1.5 W/kg", "2.5 W/kg")
+    labels = c(
+      "1.5 W/kg",
+      "2.5 W/kg"
+    )
   ) +
   
+  # Taille MPO
   scale_size_manual(
     values = c(
       "1p5" = 2.2,
@@ -415,24 +690,33 @@ p4 <- ggplot(all_data_long |> filter(variable == "FE")) +
     )
   ) +
   
+  # Type de ligne MPO
   scale_linetype_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = "solid",
       "2p5" = "dotdash"
     ),
-    labels = c("1.5 W/kg", "2.5 W/kg")
+    labels = c(
+      "1.5 W/kg",
+      "2.5 W/kg"
+    )
   ) +
+  
   guides(
     color = guide_legend(
       nrow = 2,
       byrow = TRUE,
-      override.aes = list(size = 3)
+      override.aes = list(
+        size = 3
+      )
     ),
     
     shape = guide_legend(
       nrow = 1,
-      override.aes = list(size = c(2.5, 3))
+      override.aes = list(
+        size = c(2.5, 3)
+      )
     ),
     
     size = "none"
@@ -443,7 +727,9 @@ p4 <- ggplot(all_data_long |> filter(variable == "FE")) +
   ) +
   
   scale_y_continuous(
-    expand = expansion(mult = 0.02)
+    limits = FE_y_limits,
+    breaks =  c(40, 50, 60, 70, 80),
+    expand = expansion(mult = 0.07)
   ) +
   
   labs(
@@ -486,13 +772,216 @@ p4 <- ggplot(all_data_long |> filter(variable == "FE")) +
     plot.margin = margin(
       1, 1, 1, 1,
       unit = "mm"
-    ))
+    )
+  )
+
+
+
+# Individual slope (1.5 W/kg and 2.5 W/kg)
+
+
+pred_FE_1p5 <- pred_FE |> 
+  filter(pow_condition == "1p5")
+
+pred_FE_2p5 <- pred_FE |> 
+  filter(pow_condition == "2p5")
+
+
+# Force effectiveness 1.5 W/kg
+
+p4_1p5 <- ggplot(
+  all_data_long |> 
+    filter(
+      variable == "FE",
+      pow_condition == "1p5",
+      percents != "No"
+    ),
+  aes(
+    x = SI_force,
+    y = value
+  )
+) +
+  
+  geom_point(
+    aes(color = percents),
+    shape = 16,
+    size = 2.2
+  ) +
+  
+  geom_line(
+    data = pred_FE_1p5,
+    aes(
+      x = x,
+      y = predicted
+    ),
+    color = "black",
+    linewidth = 0.5
+  ) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  scale_x_continuous(
+    expand = expansion(mult = 0.05)
+  ) +
+  
+  scale_y_continuous(
+    limits = FE_y_limits,
+    breaks =  c(40, 50, 60, 70, 80),
+    expand = expansion(mult = 0.07)
+  ) +
+  
+  labs(
+    x = "Pedal Force Asymmetry (%)",
+    y = "FE (%)"
+  ) +
+  
+  theme_classic(base_size = 6) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    axis.text = element_text(
+      size = 6
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    legend.text = element_text(
+      size = 6
+    ),
+    
+    legend.position = "top",
+    
+    plot.title = element_text(
+      face = "bold",
+      size = 7.5,
+      hjust = 0.5
+    ),
+    
+    plot.margin = margin(
+      0.5, 0.5, 0.5, 0.5,
+      unit = "mm"
+    )
+  )
+
+
+# Force effectiveness 2.5 W/kg
+
+p4_2p5 <- ggplot(
+  all_data_long |> 
+    filter(
+      variable == "FE",
+      pow_condition == "2p5",
+      percents != "No"
+    ),
+  aes(
+    x = SI_force,
+    y = value
+  )
+) +
+  
+  geom_point(
+    aes(color = percents),
+    shape = 18,
+    size = 3
+  ) +
+  
+  geom_line(
+    data = pred_FE_2p5,
+    aes(
+      x = x,
+      y = predicted
+    ),
+    color = "black",
+    linewidth = 0.5,
+    linetype = "dotdash"
+  ) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  scale_x_continuous(
+    expand = expansion(mult = 0.05)
+  ) +
+  
+  scale_y_continuous(
+    limits = FE_y_limits,
+    breaks =  c(40, 50, 60, 70, 80),
+    expand = expansion(mult = 0.07)
+  ) +
+  
+  labs(
+    x = "Pedal Force Asymmetry (%)",
+    y = "FE (%)"
+  ) +
+  
+  theme_classic(base_size = 6) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    axis.text = element_text(
+      size = 6
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 7
+    ),
+    
+    legend.text = element_text(
+      size = 6
+    ),
+    
+    legend.position = "top",
+    
+    plot.title = element_text(
+      face = "bold",
+      size = 7.5,
+      hjust = 0.5
+    ),
+    
+    plot.margin = margin(
+      0.5, 0.5, 0.5, 0.5,
+      unit = "mm"
+    )
+  )
+
 
 p4
+p4_1p5
+p4_2p5
 
-ggsave("efficiency_final.png",p3,width = 84,height = 84,units = "mm")
 
-ggsave("FE_final.png",p4,width = 84,height = 84,units = "mm", dpi=300)
+
 ```
 
 ## Graphs — Box plots
@@ -501,83 +990,50 @@ ggsave("FE_final.png",p4,width = 84,height = 84,units = "mm", dpi=300)
 
 # Efficiency
 
-p1_box <- ggplot(all_data_long |> filter(variable == "efficiency")) +
+p1_box <- ggplot(all_data_long |> filter(variable == "efficiency", percents!="No")) +
   aes(x = pow_condition, y = value) +
-  geom_boxplot(aes(fill = percents)) +
+  
+  geom_boxplot(aes(fill = percents),outlier.shape = NA) +
+  
+  geom_point(
+    aes(color = percents),
+    position = position_jitterdodge(
+      jitter.width = 0.08,
+      dodge.width = 0.75
+    ),
+    size = 1.75,
+    alpha = 0.6
+  )+
+  
   theme_classic2() +
+  
   scale_fill_manual(
     name = "PFA Target",
-    values=c(
-      "0%"  = "#E69F00",  # orange
-      "10%" = "#56B4E9",  # bleu
-      "20%" = "#009E73",  # vert
-      "30%" = "#6A3D9A"   # violet
-    ))+
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      "0%"  = "#F4C46A",
+      "10%" = "#8CCDF0",
+      "20%" = "#66C7A8",
+      "30%" = "#AA83C4"
+    ),
+    guide = "none"
+  ) +
   
   scale_x_discrete(
     labels = c(
       "1p5" = "1.5 W/kg",
       "2p5" = "2.5 W/kg"
     )
-  )+theme_classic(base_size = 8) +
+  ) +
   
-  theme(
-    legend.position = "top",
-    legend.margin = margin(
-      t = 0,
-      r = 0,
-      b = 0,
-      l = -2,
-      unit = "mm"
-    ),
-    aspect.ratio = 1,
-    
-    axis.title = element_text(
-      face = "bold",
-      size = 10
-    ),
-    
-    axis.text = element_text(
-      size = 9
-    ),
-    
-    legend.title = element_text(
-      face = "bold",
-      size = 10
-    ),
-    
-    legend.text = element_text(
-      size = 9
-    )
-  )+
-  labs(
-    x = "Average MPO",
-    y = " Net Efficiency (%)"
-  )
-
-p1_box
-
-# FE
-
-p2_box <- ggplot(all_data_long |> filter(variable == "FE")) +
-  aes(x = pow_condition, y = value) +
-  geom_boxplot(aes(fill = percents)) +
-  theme_classic2() +
-  scale_fill_manual(
-    name = "PFA Target",
-    values=c(
-      "0%"  = "#E69F00",  # orange
-      "10%" = "#56B4E9",  # bleu
-      "20%" = "#009E73",  # vert
-      "30%" = "#6A3D9A"   # violet
-    ))+
-  
-  scale_x_discrete(
-    labels = c(
-      "1p5" = "1.5 W/kg",
-      "2p5" = "2.5 W/kg"
-    )
-  )+
   theme_classic(base_size = 8) +
   
   theme(
@@ -608,16 +1064,104 @@ p2_box <- ggplot(all_data_long |> filter(variable == "FE")) +
     legend.text = element_text(
       size = 9
     )
-  )+
+  ) +
+  
   labs(
-    x = "Average MPO",
-    y = " FE (%)"
+    x = "Overall MPO",
+    y = "Net Efficiency (%)"
   )
+
+p1_box
+
+
+# FE
+
+p2_box <- ggplot(all_data_long |> filter(variable == "FE", percents!="No")) +
+  aes(x = pow_condition, y = value) +
+  
+  geom_boxplot(aes(fill = percents),outlier.shape = NA) +
+  
+  geom_point(
+    aes(color = percents),
+    position = position_jitterdodge(
+      jitter.width = 0.08,
+      dodge.width = 0.75
+    ),
+    size = 1.75,
+    alpha = 0.6
+  )+
+  
+  theme_classic2() +
+  
+  scale_fill_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      "0%"  = "#F4C46A",
+      "10%" = "#8CCDF0",
+      "20%" = "#66C7A8",
+      "30%" = "#AA83C4"
+    ),
+    guide = "none"
+  ) +
+  
+  scale_x_discrete(
+    labels = c(
+      "1p5" = "1.5 W/kg",
+      "2p5" = "2.5 W/kg"
+    )
+  ) +
+  
+  theme_classic(base_size = 8) +
+  
+  theme(
+    legend.position = "top",
+    legend.margin = margin(
+      t = 0,
+      r = 0,
+      b = 0,
+      l = -2,
+      unit = "mm"
+    ),
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    axis.text = element_text(
+      size = 9
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    legend.text = element_text(
+      size = 9
+    )
+  ) +
+  
+  labs(
+    x = "Overall MPO",
+    y = "FE (%)"
+  )
+
 p2_box
 
 
-ggsave("efficiency_box_final.png", plot = p1_box, width = 84, height = 84, units="mm",dpi = 300)
-ggsave("FE_box_final.png", plot = p2_box, width = 84, height = 84, units="mm",dpi = 300)
+#ggsave("efficiency_box_final.png", plot = p1_box, width = 84, height = 84, units="mm",dpi = 300)
+#ggsave("FE_box_final.png", plot = p2_box, width = 84, height = 84, units="mm",dpi = 300)
 ```
 
 # Supplementary materials — Power output asymmetry (SI_pow)
@@ -657,6 +1201,32 @@ pred_FE_pow <- pred_FE_pow |>
 
 ```{r suppl_SI_pow_graphs}
 
+################ MODEL ###################################
+mod_eff_pow<- lmer(efficiency ~ SI_pow+pow_condition + (1|subject), data = all_data)
+summary(mod_eff_pow) 
+r2(mod_eff_pow)
+
+
+mod_FE_pow<- lmer(FE ~ SI_pow+pow_condition + (1|subject), data = all_data)
+summary(mod_FE_pow) 
+r2(mod_FE_pow)
+
+
+################# Model READY TO PLOT  ################################
+
+pred_eff_pow <- ggpredict(mod_eff_pow,terms = c("SI_pow", "pow_condition"))
+pred_eff_pow$variable <- "efficiency"
+
+pred_eff_pow <- pred_eff_pow |> 
+  rename(pow_condition = group)
+
+
+
+pred_FE_pow <- ggpredict(mod_FE_pow, terms = c("SI_pow", "pow_condition"))
+pred_FE_pow$variable  <- "FE"
+pred_FE_pow <- pred_FE_pow |> 
+  rename(pow_condition = group)
+
 
 p3_pow <- ggplot(all_data_long |> filter(variable == "efficiency")) +
   aes(x = SI_pow, y = value) +
@@ -691,7 +1261,7 @@ p3_pow <- ggplot(all_data_long |> filter(variable == "efficiency")) +
   ) +
   
   scale_shape_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = 16,
       "2p5" = 18
@@ -710,7 +1280,7 @@ p3_pow <- ggplot(all_data_long |> filter(variable == "efficiency")) +
   ) +
   
   scale_linetype_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = "solid",
       "2p5" = "dotdash"
@@ -745,7 +1315,7 @@ p3_pow <- ggplot(all_data_long |> filter(variable == "efficiency")) +
   ) +
   
   labs(
-    x = "MPO asymmetry (%)",
+    x = "Overall MPO asymmetry (%)",
     y = "Net efficiency (%)"
   ) +
   
@@ -824,7 +1394,7 @@ p4_pow <- ggplot(all_data_long |> filter(variable == "FE")) +
   ) +
   
   scale_shape_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = 16,
       "2p5" = 18
@@ -843,7 +1413,7 @@ p4_pow <- ggplot(all_data_long |> filter(variable == "FE")) +
   ) +
   
   scale_linetype_manual(
-    name = "Average MPO",
+    name = "Overall MPO",
     values = c(
       "1p5" = "solid",
       "2p5" = "dotdash"
@@ -878,7 +1448,7 @@ p4_pow <- ggplot(all_data_long |> filter(variable == "FE")) +
   ) +
   
   labs(
-    x = "MPO asymmetry (%)",
+    x = "Overall MPO asymmetry (%)",
     y = "FE (%)"
   ) +
   
@@ -923,8 +1493,463 @@ p4_pow <- ggplot(all_data_long |> filter(variable == "FE")) +
 
 p4_pow
 
-ggsave("efficiency_pow_final.png", plot = p1_box, width = 84, height = 84, units="mm",dpi = 300)
-ggsave("FE_pow_final.png", plot = p2_box, width = 84, height = 84, units="mm",dpi = 300)
+ggsave("efficiency_pow_final.png", plot = p3_pow, width = 84, height = 84, units="mm",dpi = 300)
+ggsave("FE_pow_final.png", plot = p4_pow, width = 84, height = 84, units="mm",dpi = 300)
+```
+
+# Net metabolic power vs overall measured mechanical power
+
+```{r}
+
+
+y_limits <- range(
+  all_data$Normalized_Net_Metabolic_Power[
+    all_data$percents != "No" &
+      !is.na(all_data$Normalized_Net_Metabolic_Power)
+  ],
+  na.rm = TRUE
+)
+
+# 1.5 W/kg
+
+fig_1p5 <- all_data |>
+  filter(
+    pow_condition == "1p5", percents!="No",
+    !is.na(Pow_norm),
+    !is.na(Normalized_Net_Metabolic_Power)
+  ) |>
+  ggplot(
+    aes(
+      x = Pow_norm,
+      y = Normalized_Net_Metabolic_Power,
+      group = subject,
+      shape = subject,
+      color = percents
+    )
+  ) +
+  geom_point(size = 3) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"    = "#E69F00",
+      "10%"   = "#56B4E9",
+      "20%"   = "#009E73",
+      "30%"   = "#6A3D9A"
+    )
+  ) +
+  
+  scale_shape_manual(
+    name = "Subject",
+    values = c(
+      16, 17, 15, 18, 0,
+      1, 2, 5, 6, 7,
+      8, 9, 10, 11, 12
+    )
+  ) +
+  scale_y_continuous(
+    limits = y_limits,
+    expand = expansion(mult = 0.05)
+  )+
+  
+  labs(
+    x = "Measured overall mechanical power (W/kg)",
+    y = "Net metabolic power (W/kg)",
+    title = "1.5 W/kg"
+  ) +
+  
+  guides(
+    color = guide_legend(
+      nrow = 1,
+      byrow = TRUE
+    ),
+    shape = guide_legend(
+      nrow = 2,
+      byrow = TRUE
+    )
+  )+
+  
+  theme_classic(base_size = 8) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    axis.text = element_text(
+      size = 9
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    legend.text = element_text(
+      size = 9
+    ),
+    
+    legend.position = "top",
+    
+    legend.box = "vertical",
+    
+    legend.spacing.y = unit(2, "mm"),
+    
+    plot.title = element_text(
+      face = "bold",
+      size = 11,
+      hjust = 0.5
+    ),
+    
+    plot.margin = margin(
+      1, 1, 1, 1,
+      unit = "mm"
+    )
+  )
+
+# 2.5 W/kg
+
+fig_2p5 <- all_data |>
+  filter(
+    pow_condition == "2p5",
+    percents != "No",
+    !is.na(Pow_norm),
+    !is.na(Normalized_Net_Metabolic_Power)
+  ) |>
+  ggplot(
+    aes(
+      x = Pow_norm,
+      y = Normalized_Net_Metabolic_Power,
+      group = subject,
+      shape = subject,
+      color = percents
+    )
+  ) +
+  
+  geom_point(size = 3) +
+  
+  scale_x_continuous(
+    expand = expansion(mult = 0.05)
+  ) +
+  
+  scale_y_continuous(
+    expand = expansion(mult = 0.05)
+  ) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  scale_shape_manual(
+    name = "Subject",
+    values = c(
+      16, 17, 15, 18, 0,
+      1, 2, 5, 6, 7,
+      8, 9, 10, 11, 12
+    )
+  ) +
+  scale_y_continuous(
+    limits = y_limits,
+    expand = expansion(mult = 0.05)
+  )+
+  
+  labs(
+    x = "Measured overall mechanical power (W/kg)",
+    y = "Net metabolic power (W/kg)",
+    title = "2.5 W/kg"
+  ) +
+  
+  guides(
+    color = guide_legend(
+      nrow = 1,
+      byrow = TRUE
+    ),
+    shape = guide_legend(
+      nrow = 2,
+      byrow = TRUE
+    )
+  ) +
+  
+  theme_classic(base_size = 8) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    axis.text = element_text(
+      size = 9
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    legend.text = element_text(
+      size = 9
+    ),
+    
+    legend.position = "top",
+    
+    legend.box = "vertical",
+    
+    legend.spacing.y = unit(2, "mm"),
+    
+    plot.title = element_text(
+      face = "bold",
+      size = 11,
+      hjust = 0.5
+    ),
+    
+    plot.margin = margin(
+      1, 1, 1, 1,
+      unit = "mm"
+    )
+  )
+
+fig_1p5
+fig_2p5
+
+```
+
+# Individual points linked
+
+```{r}
+
+
+# Same scale for the axis
+eff_y_limits <- range(
+  all_data$efficiency[all_data$percents != "No"],
+  na.rm = TRUE
+)
+
+plot_indiv_sub_eff <- all_data |>
+  filter(percents != "No") |>
+  mutate(
+    percents = factor(
+      percents,
+      levels = c("0%", "10%", "20%", "30%")
+    )
+  ) |>
+  arrange(subject, pow_condition, percents) |>
+  
+  ggplot(
+    aes(
+      x = SI_force,
+      y = efficiency,
+      group = subject
+    )
+  ) +
+  
+  geom_point(
+    aes(color = percents),
+    size = 2.8
+  ) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  geom_line(
+    aes(group = subject),
+    color = "black",
+    linewidth = 0.5,
+    alpha = 0.5
+  ) +
+  
+  facet_wrap(
+    ~pow_condition,
+    nrow = 1,
+    labeller = as_labeller(c(
+      "1p5" = "1.5 W/kg",
+      "2p5" = "2.5 W/kg"
+    ))
+  ) +
+  
+  scale_x_continuous(
+    expand = expansion(mult = 0.02)
+  ) +
+  
+  scale_y_continuous(
+    limits = eff_y_limits,
+    breaks = pretty(eff_y_limits, n = 5),
+    expand = expansion(mult = 0.02)
+  ) +
+  
+  labs(
+    x = "Pedal Force Asymmetry (%)",
+    y = "Net Efficiency (%)"
+  ) +
+  
+  theme_classic(base_size = 8) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    axis.text = element_text(
+      size = 9
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    legend.text = element_text(
+      size = 9
+    ),
+    
+    strip.text = element_text(
+      face = "bold",
+      size = 11
+    ),
+    
+    legend.position = "top",
+    
+    legend.box = "horizontal",
+    
+    plot.margin = margin(
+      1, 1, 1, 1,
+      unit = "mm"
+    )
+  )
+
+# Force effctiveness
+
+# Same scale for the axis
+FE_y_limits <- range(
+  all_data$FE[all_data$percents != "No"],
+  na.rm = TRUE
+)
+
+plot_indiv_sub_FE <- all_data |>
+  filter(percents != "No") |>
+  mutate(
+    percents = factor(
+      percents,
+      levels = c("0%", "10%", "20%", "30%")
+    )
+  ) |>
+  arrange(subject, pow_condition, percents) |>
+  
+  ggplot(
+    aes(
+      x = SI_force,
+      y = FE,
+      group = subject
+    )
+  ) +
+  
+  geom_point(
+    aes(color = percents),
+    size = 2.8
+  ) +
+  
+  scale_color_manual(
+    name = "PFA Target",
+    values = c(
+      "0%"  = "#E69F00",
+      "10%" = "#56B4E9",
+      "20%" = "#009E73",
+      "30%" = "#6A3D9A"
+    )
+  ) +
+  
+  geom_line(
+    aes(group = subject),
+    color = "black",
+    linewidth = 0.5,
+    alpha = 0.5
+  ) +
+  
+  facet_wrap(
+    ~pow_condition,
+    nrow = 1,
+    labeller = as_labeller(c(
+      "1p5" = "1.5 W/kg",
+      "2p5" = "2.5 W/kg"
+    ))
+  ) +
+  
+  scale_x_continuous(
+    expand = expansion(mult = 0.02)
+  ) +
+  
+  scale_y_continuous(
+    limits = FE_y_limits,
+    breaks = pretty(FE_y_limits, n = 5),
+    expand = expansion(mult = 0.02)
+  ) +
+  
+  labs(
+    x = "Pedal Force Asymmetry (%)",
+    y = "FE (%)"
+  ) +
+  
+  theme_classic(base_size = 8) +
+  
+  theme(
+    aspect.ratio = 1,
+    
+    axis.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    axis.text = element_text(
+      size = 9
+    ),
+    
+    legend.title = element_text(
+      face = "bold",
+      size = 10
+    ),
+    
+    legend.text = element_text(
+      size = 9
+    ),
+    
+    strip.text = element_text(
+      face = "bold",
+      size = 11
+    ),
+    
+    legend.position = "top",
+    
+    legend.box = "horizontal",
+    
+    plot.margin = margin(
+      1, 1, 1, 1,
+      unit = "mm"
+    )
+  )
+
+plot_indiv_sub_eff
+plot_indiv_sub_FE
 ```
 
 # Appendix — Model diagnostics
