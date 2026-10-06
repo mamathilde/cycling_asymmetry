@@ -13,7 +13,7 @@ We measured pedal force and metabolic data.
 ```text
 ├── code.qmd      # Main analysis script
 ├── data/         # Processed data files (one per subject)
-└── figures/      # Figures included in the manuscript
+└── figures/      # Main figures included in the manuscript
 ```
 
 ## Data
